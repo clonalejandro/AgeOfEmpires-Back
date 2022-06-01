@@ -1,0 +1,9 @@
+{
+  "name": "AgeOfEmpires-Back",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/clonalejandro/AgeOfEmpires-Back",
+  "author": "clonalejandro",
+  "license": "MIT",
+  "private": true
+}
