@@ -2,6 +2,7 @@ import express from 'express'
 import http from 'http'
 import cl1b from './cl1b'
 import actions from './actions'
+import initSql from './utils/sql'
 const server = express()
 const app: IApp = {
     port: {
@@ -12,6 +13,8 @@ const app: IApp = {
 //TODO: Make a ratelimit
 server.use(express.urlencoded({ extended: true }))
 server.use(express.json())
+
+initSql()
 
 actions.forEach((action: IAction) => {
     const handler = cl1b[action.type.toLowerCase()]
