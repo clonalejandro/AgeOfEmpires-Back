@@ -4,8 +4,10 @@ export default [
     {
         id: 'favourite',
         type: 'get',
+        needsAuth: true,
         callback: (req: any, res: any) => {
-            const { id, user_id }: IFavourite = req.query
+            const user_id = req.user.id
+            const { id }: IFavourite = req.query
 
             if (!user_id) {
                 query('SELECT * FROM favourites WHERE id = ?', [id])
@@ -21,8 +23,10 @@ export default [
     {
         id: 'favourite',
         type: 'post',
+        needsAuth: true,
         callback: (req: any, res: any) => {
-            const { user_id, civilization_id }: IFavourite = req.body
+            const user_id = req.user.id
+            const { civilization_id }: IFavourite = req.body
             query('SELECT * FROM favourites WHERE user_id = ?', [user_id])
                 .then((rows: any) => {
                     if (rows.length < 3) {
@@ -42,8 +46,10 @@ export default [
     {
         id: 'favourite',
         type: 'delete',
+        needsAuth: true,
         callback: (req: any, res: any) => {
-            const { user_id, civilization_id }: IFavourite = req.body
+            const user_id = req.user.id
+            const { civilization_id }: IFavourite = req.body
             query('DELETE FROM favourites WHERE user_id = ? AND civilization_id = ?', [user_id, civilization_id])
                 .then((row) => res.status(200).send(row))
                 .catch((err) => res.status(500).send(err))
