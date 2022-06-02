@@ -1,17 +1,14 @@
 import mysql from 'mysql'
 
-var connection: mysql.Connection
+var connection: mysql.Connection | undefined
 
 export default function create() {
-    const config = {
+    connection = mysql.createConnection({
         host: process.env.MYSQL_HOST,
         user: process.env.MYSQL_USER,
         password: process.env.MYSQL_PASSWORD,
         database: process.env.MYSQL_DATABASE,
-    }
-
-    connection = mysql.createConnection(config)
-    console.log('Database linked!', config)
+    })
 
     connection.on('error', (err) => {
         if (err.code === 'PROTOCOL_CONNECTION_LOST') {
@@ -20,13 +17,16 @@ export default function create() {
             throw err
         }
     })
+
+    connect()
 }
 
 function connect() {
     if (!connection) {
         create()
+        return
     }
-    connection.connect((err) => {
+    connection?.connect((err) => {
         if (err) {
             console.error(err)
             return setTimeout(connect, 2000)
@@ -35,18 +35,11 @@ function connect() {
     })
 }
 
-function end() {
-    connection.end()
-    console.log('Connection to database ended')
-}
-
 export function query(sql: string, args: any = []) {
     return new Promise((resolve, reject) => {
-        connect()
-        connection.query(sql, args, (err, rows) => {
+        connection?.query(sql, args, (err, rows) => {
             if (err) return reject(err)
             resolve(rows)
         })
-        end()
     })
 }
