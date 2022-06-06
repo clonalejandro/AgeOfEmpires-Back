@@ -1,5 +1,6 @@
 import express from 'express'
 import http from 'http'
+import cors from 'cors'
 import setAuth from './utils/auth'
 import cl1b from './cl1b'
 import actions from './actions'
@@ -12,6 +13,7 @@ const app: IApp = {
 }
 
 //TODO: Make a ratelimit
+server.use(cors())
 server.use(express.urlencoded({ extended: true }))
 server.use(express.json())
 

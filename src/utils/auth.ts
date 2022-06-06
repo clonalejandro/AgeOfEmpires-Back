@@ -1,13 +1,15 @@
 import passport from 'passport'
 import session from 'express-session'
-import { Strategy } from 'passport-local'
+import jwt from 'jsonwebtoken'
+import { Strategy as localStrategy } from 'passport-local'
+import { ExtractJwt, Strategy } from 'passport-jwt'
 import { query } from '../utils/sql'
 import { compare } from '../utils/encrypt'
 
 const passportLogin = () => {
     passport.use(
         'login',
-        new Strategy({ passReqToCallback: true }, (req, username, password, done) => {
+        new localStrategy({ passReqToCallback: true }, (req, username, password, done) => {
             query('SELECT * FROM users where username = ?', [username])
                 .then(({ 0: user }: any) => {
                     if (!user) {
@@ -23,16 +25,23 @@ const passportLogin = () => {
     )
 }
 
-const passportLogout = (server: any) =>
-    server.get('/logout', (req: any, res: any) => req.logOut(() => res.status(200).send('Logged out successfully')))
-
 export default function setAuth(server: any) {
-    server.use(session({ secret: process.env.SESSION || 'keyboard cat', resave: false, saveUninitialized: false }))
+    server.use(session({ 
+        secret: process.env.SESSION || 'keyboard cat', 
+        resave: false, 
+        saveUninitialized: true,
+        cookie: {
+            httpOnly:true,
+            secure:true, 
+            maxAge: 1000*60*60*24*7,  
+            sameSite:'none',
+          },
+          proxy: true,
+    }))
     server.use(passport.initialize())
     server.use(passport.session())
 
     passportLogin()
-    passportLogout(server)
 
     passport.serializeUser((user: any, done: any) => done(null, user.id))
     passport.deserializeUser((id: any, done: any) =>
@@ -43,18 +52,44 @@ export default function setAuth(server: any) {
 
     server.post(
         '/login',
-        passport.authenticate('login', {
-            successMessage: 'Login success',
-            failureMessage: 'Login failed',
-            session: true,
-        }),
-        (req: any, res: any) => res.status(200).send(req.user),
+        async (req: any, res: any, next: any) => {
+            passport.authenticate(
+                'login',
+                async (err: any, user: any, info: any) => {
+                    if (err || !user) {
+                        return next(err)
+                    }
+                    
+                    req.login(
+                        user,
+                        { session: false },
+                        async (err: any) => {
+                            if (err) {
+                                return next(err)
+                            }
+                            const { id, username } = user
+                            const token = jwt.sign({ id, username }, process.env.JWT_SECRET || 'secret')
+                            return res.status(200).send({ token })
+                        }
+                    )
+                }
+            )(req, res, next)
+        }
     )
-}
-
-export function isAuth(req: any, res: any, next: any) {
-    if (req.isAuthenticated()) {
-        return next()
-    }
-    res.status(403).send('Access denied')
+    passport.use(
+        new Strategy(
+            {
+                jwtFromRequest: ExtractJwt.fromUrlQueryParameter('token'),
+                secretOrKey: process.env.JWT_SECRET || 'secret',
+            },
+            (token: any, done: any) => {
+                try {
+                    return done(null, token)
+                }
+                catch (err) {
+                    return done(err)
+                }
+            }
+        )
+    )
 }

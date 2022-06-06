@@ -2,7 +2,7 @@ import { query } from '../utils/sql'
 
 export default [
     {
-        id: 'favourite',
+        id: 'favourites',
         type: 'get',
         needsAuth: true,
         callback: (req: any, res: any) => {
