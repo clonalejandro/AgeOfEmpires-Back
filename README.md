@@ -41,3 +41,6 @@ INSERT INTO users (username, password) VALUES ('test', '$2b$10$yLi60RzTa6QGzLVhX
 ### The testing user credentials
 - username: test
 - password: test
+
+## Backend Documentation
+* [Postman](https://documenter.getpostman.com/view/7840894/Uz5GmaoK)
